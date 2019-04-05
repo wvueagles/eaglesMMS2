@@ -6,7 +6,9 @@
 package controller;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.Date;
+import java.util.Objects;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -27,7 +29,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "Person.findAll", query = "SELECT p FROM Person p")
-    , @NamedQuery(name = "Person.findByReportingpersonkey", query = "SELECT p FROM Person p WHERE p.reportingpersonkey = :reportingpersonkey")
+    , @NamedQuery(name = "Person.findByPersonkey", query = "SELECT p FROM Person p WHERE p.personkey = :personkey")
     , @NamedQuery(name = "Person.findByFirstname", query = "SELECT p FROM Person p WHERE p.firstname = :firstname")
     , @NamedQuery(name = "Person.findByLastname", query = "SELECT p FROM Person p WHERE p.lastname = :lastname")
     , @NamedQuery(name = "Person.findByAddress", query = "SELECT p FROM Person p WHERE p.address = :address")
@@ -41,8 +43,8 @@ public class Person implements Serializable {
     private static final long serialVersionUID = 1L;
     @Id
     @Basic(optional = false)
-    @Column(name = "reportingpersonkey")
-    private String reportingpersonkey;
+    @Column(name = "personkey")
+    private String personkey;
     @Basic(optional = false)
     @Column(name = "firstname")
     private String firstname;
@@ -69,24 +71,34 @@ public class Person implements Serializable {
     public Person() {
     }
 
-    public Person(String reportingpersonkey) {
-        this.reportingpersonkey = reportingpersonkey;
+    public Person(String personkey) {
+        this.personkey = personkey;
     }
 
-    public Person(String reportingpersonkey, String firstname, String lastname, Date createdat, Date updatedat) {
-        this.reportingpersonkey = reportingpersonkey;
+    //min for insert
+    public Person(String personkey, String firstname, String lastname) {
+        this.personkey = personkey;
         this.firstname = firstname;
         this.lastname = lastname;
-        this.createdat = createdat;
-        this.updatedat = updatedat;
+    }
+    
+    //max for full update
+    public Person(String personkey, String firstname, String lastname, String address, String emailaddress, String alternatephone, String phone) {
+        this.personkey = personkey;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.address = address;
+        this.emailaddress = emailaddress;
+        this.alternatephone = alternatephone;
+        this.phone = phone;
     }
 
-    public String getReportingpersonkey() {
-        return reportingpersonkey;
+    public String getPersonkey() {
+        return personkey;
     }
 
-    public void setReportingpersonkey(String reportingpersonkey) {
-        this.reportingpersonkey = reportingpersonkey;
+    public void setPersonkey(String personkey) {
+        this.personkey = personkey;
     }
 
     public String getFirstname() {
@@ -156,18 +168,47 @@ public class Person implements Serializable {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (reportingpersonkey != null ? reportingpersonkey.hashCode() : 0);
+        hash += (personkey != null ? personkey.hashCode() : 0);
         return hash;
     }
 
     @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof Person)) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
             return false;
         }
-        Person other = (Person) object;
-        if ((this.reportingpersonkey == null && other.reportingpersonkey != null) || (this.reportingpersonkey != null && !this.reportingpersonkey.equals(other.reportingpersonkey))) {
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Person other = (Person) obj;
+        if (!Objects.equals(this.personkey, other.personkey)) {
+            return false;
+        }
+        if (!Objects.equals(this.firstname, other.firstname)) {
+            return false;
+        }
+        if (!Objects.equals(this.lastname, other.lastname)) {
+            return false;
+        }
+        if (!Objects.equals(this.address, other.address)) {
+            return false;
+        }
+        if (!Objects.equals(this.phone, other.phone)) {
+            return false;
+        }
+        if (!Objects.equals(this.alternatephone, other.alternatephone)) {
+            return false;
+        }
+        if (!Objects.equals(this.emailaddress, other.emailaddress)) {
+            return false;
+        }
+        if (!Objects.equals(this.createdat, other.createdat)) {
+            return false;
+        }
+        if (!Objects.equals(this.updatedat, other.updatedat)) {
             return false;
         }
         return true;
@@ -175,7 +216,6 @@ public class Person implements Serializable {
 
     @Override
     public String toString() {
-        return "controller.Person[ reportingpersonkey=" + reportingpersonkey + " ]";
-    }
-    
+        return "controller.Person[ personkey=" + personkey + " ]";
+    }  
 }

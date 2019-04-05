@@ -6,14 +6,13 @@
 package controller;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.lang.reflect.Field;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -27,7 +26,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "Potholeallreport.findAll", query = "SELECT p FROM Potholeallreport p")
     , @NamedQuery(name = "Potholeallreport.findByWorkid", query = "SELECT p FROM Potholeallreport p WHERE p.workid = :workid")
     , @NamedQuery(name = "Potholeallreport.findByPotholelocation", query = "SELECT p FROM Potholeallreport p WHERE p.potholelocation = :potholelocation")
-    , @NamedQuery(name = "Potholeallreport.findByPotholeseverity", query = "SELECT p FROM Potholeallreport p WHERE p.potholeseverity = :potholeseverity")
+    , @NamedQuery(name = "Potholeallreport.findBySeverity", query = "SELECT p FROM Potholeallreport p WHERE p.severity = :severity")
     , @NamedQuery(name = "Potholeallreport.findByCreateddate", query = "SELECT p FROM Potholeallreport p WHERE p.createddate = :createddate")
     , @NamedQuery(name = "Potholeallreport.findByPotholestatus", query = "SELECT p FROM Potholeallreport p WHERE p.potholestatus = :potholestatus")
     , @NamedQuery(name = "Potholeallreport.findByRepairstatus", query = "SELECT p FROM Potholeallreport p WHERE p.repairstatus = :repairstatus")
@@ -37,9 +36,9 @@ import javax.xml.bind.annotation.XmlRootElement;
     , @NamedQuery(name = "Potholeallreport.findByReportingpersonkey", query = "SELECT p FROM Potholeallreport p WHERE p.reportingpersonkey = :reportingpersonkey")
     , @NamedQuery(name = "Potholeallreport.findByRepairpoc", query = "SELECT p FROM Potholeallreport p WHERE p.repairpoc = :repairpoc")
     , @NamedQuery(name = "Potholeallreport.findByWorkorderpoc", query = "SELECT p FROM Potholeallreport p WHERE p.workorderpoc = :workorderpoc")
-    , @NamedQuery(name = "Potholeallreport.findByPotholeupdatedtime", query = "SELECT p FROM Potholeallreport p WHERE p.potholeupdatedtime = :potholeupdatedtime")
-    , @NamedQuery(name = "Potholeallreport.findByRepairupdatedtime", query = "SELECT p FROM Potholeallreport p WHERE p.repairupdatedtime = :repairupdatedtime")
-    , @NamedQuery(name = "Potholeallreport.findByWorkorderupdatedtime", query = "SELECT p FROM Potholeallreport p WHERE p.workorderupdatedtime = :workorderupdatedtime")
+    , @NamedQuery(name = "Potholeallreport.findByPotholeupdateddate", query = "SELECT p FROM Potholeallreport p WHERE p.potholeupdateddate = :potholeupdateddate")
+    , @NamedQuery(name = "Potholeallreport.findByRepairupdateddate", query = "SELECT p FROM Potholeallreport p WHERE p.repairupdateddate = :repairupdateddate")
+    , @NamedQuery(name = "Potholeallreport.findByWorkorderupdateddae", query = "SELECT p FROM Potholeallreport p WHERE p.workorderupdateddae = :workorderupdateddae")
     , @NamedQuery(name = "Potholeallreport.findByPotholeclosedtime", query = "SELECT p FROM Potholeallreport p WHERE p.potholeclosedtime = :potholeclosedtime")
     , @NamedQuery(name = "Potholeallreport.findByRepairclosedtime", query = "SELECT p FROM Potholeallreport p WHERE p.repairclosedtime = :repairclosedtime")
     , @NamedQuery(name = "Potholeallreport.findByWorkorderclosedtime", query = "SELECT p FROM Potholeallreport p WHERE p.workorderclosedtime = :workorderclosedtime")
@@ -48,16 +47,14 @@ import javax.xml.bind.annotation.XmlRootElement;
     , @NamedQuery(name = "Potholeallreport.findByWorkordercomments", query = "SELECT p FROM Potholeallreport p WHERE p.workordercomments = :workordercomments")})
 public class Potholeallreport implements Serializable {
 
-    private static final long serialVersionUID = 1L;
     @Column(name = "workid")
-    private Integer workid;
+    private String workid;
     @Column(name = "potholelocation")
     private String potholelocation;
-    @Column(name = "potholeseverity")
-    private Integer potholeseverity;
+    @Column(name = "severity")
+    private String severity;
     @Column(name = "createddate")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createddate;
+    private String createddate;
     @Column(name = "potholestatus")
     private String potholestatus;
     @Column(name = "repairstatus")
@@ -74,39 +71,43 @@ public class Potholeallreport implements Serializable {
     private String repairpoc;
     @Column(name = "workorderpoc")
     private String workorderpoc;
-    @Column(name = "potholeupdatedtime")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date potholeupdatedtime;
-    @Column(name = "repairupdatedtime")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date repairupdatedtime;
-    @Column(name = "workorderupdatedtime")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date workorderupdatedtime;
+    @Column(name = "potholeupdateddate")
+    private String potholeupdateddate;
+    @Column(name = "repairupdateddate")
+    private String repairupdateddate;
+    @Column(name = "workorderupdateddae")
+    private String workorderupdateddae;
     @Column(name = "potholeclosedtime")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date potholeclosedtime;
+    private String potholeclosedtime;
     @Column(name = "repairclosedtime")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date repairclosedtime;
+    private String repairclosedtime;
     @Column(name = "workorderclosedtime")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date workorderclosedtime;
+    private String workorderclosedtime;
     @Column(name = "potholecomments")
     private String potholecomments;
     @Column(name = "repaircomments")
     private String repaircomments;
     @Column(name = "workordercomments")
     private String workordercomments;
+    @Id
+    private Long id;
 
+    protected void setStringField(String fieldName, String value) throws NoSuchFieldException, IllegalAccessException {
+    try {
+            Field fpField = getClass().getDeclaredField(fieldName);
+            fpField.set(this, value);
+        } catch (IllegalAccessException | IllegalArgumentException | NoSuchFieldException | SecurityException e) {
+        }
+    }
+        
     public Potholeallreport() {
     }
 
-    public Integer getWorkid() {
+    public String getWorkid() {
         return workid;
     }
 
-    public void setWorkid(Integer workid) {
+    public void setWorkid(String workid) {
         this.workid = workid;
     }
 
@@ -118,19 +119,19 @@ public class Potholeallreport implements Serializable {
         this.potholelocation = potholelocation;
     }
 
-    public Integer getPotholeseverity() {
-        return potholeseverity;
+    public String getSeverity() {
+        return severity;
     }
 
-    public void setPotholeseverity(Integer potholeseverity) {
-        this.potholeseverity = potholeseverity;
+    public void setSeverity(String severity) {
+        this.severity = severity;
     }
 
-    public Date getCreateddate() {
+    public String getCreateddate() {
         return createddate;
     }
 
-    public void setCreateddate(Date createddate) {
+    public void setCreateddate(String createddate) {
         this.createddate = createddate;
     }
 
@@ -198,51 +199,51 @@ public class Potholeallreport implements Serializable {
         this.workorderpoc = workorderpoc;
     }
 
-    public Date getPotholeupdatedtime() {
-        return potholeupdatedtime;
+    public String getPotholeupdateddate() {
+        return potholeupdateddate;
     }
 
-    public void setPotholeupdatedtime(Date potholeupdatedtime) {
-        this.potholeupdatedtime = potholeupdatedtime;
+    public void setPotholeupdateddate(String potholeupdateddate) {
+        this.potholeupdateddate = potholeupdateddate;
     }
 
-    public Date getRepairupdatedtime() {
-        return repairupdatedtime;
+    public String getRepairupdateddate() {
+        return repairupdateddate;
     }
 
-    public void setRepairupdatedtime(Date repairupdatedtime) {
-        this.repairupdatedtime = repairupdatedtime;
+    public void setRepairupdateddate(String repairupdateddate) {
+        this.repairupdateddate = repairupdateddate;
     }
 
-    public Date getWorkorderupdatedtime() {
-        return workorderupdatedtime;
+    public String getWorkorderupdateddae() {
+        return workorderupdateddae;
     }
 
-    public void setWorkorderupdatedtime(Date workorderupdatedtime) {
-        this.workorderupdatedtime = workorderupdatedtime;
+    public void setWorkorderupdateddae(String workorderupdateddae) {
+        this.workorderupdateddae = workorderupdateddae;
     }
 
-    public Date getPotholeclosedtime() {
+    public String getPotholeclosedtime() {
         return potholeclosedtime;
     }
 
-    public void setPotholeclosedtime(Date potholeclosedtime) {
+    public void setPotholeclosedtime(String potholeclosedtime) {
         this.potholeclosedtime = potholeclosedtime;
     }
 
-    public Date getRepairclosedtime() {
+    public String getRepairclosedtime() {
         return repairclosedtime;
     }
 
-    public void setRepairclosedtime(Date repairclosedtime) {
+    public void setRepairclosedtime(String repairclosedtime) {
         this.repairclosedtime = repairclosedtime;
     }
 
-    public Date getWorkorderclosedtime() {
+    public String getWorkorderclosedtime() {
         return workorderclosedtime;
     }
 
-    public void setWorkorderclosedtime(Date workorderclosedtime) {
+    public void setWorkorderclosedtime(String workorderclosedtime) {
         this.workorderclosedtime = workorderclosedtime;
     }
 
@@ -268,6 +269,14 @@ public class Potholeallreport implements Serializable {
 
     public void setWorkordercomments(String workordercomments) {
         this.workordercomments = workordercomments;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
     
 }

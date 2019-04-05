@@ -8,6 +8,7 @@
     <class>controller.Potholeallreport</class>
     <class>controller.Repair</class>
     <class>controller.Mmsrelease</class>
+    <class>controller.Personreport</class>
     <exclude-unlisted-classes>false</exclude-unlisted-classes>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/eagles_mms"/>
