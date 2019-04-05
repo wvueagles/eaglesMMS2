@@ -13,21 +13,26 @@
         <div id='cssmenu'>
             <ul>
                 <li><a href='.\index.xhtml'><span>Home</span></a></li>
-                <li><a href=".\potholes.jsp"><span>Potholes</span></a></li>
+                <li class='active'><a href=".\potholes.jsp"><span>Potholes</span></a></li>
                 <li><a href=".\repair.jsp"><span>Repairs</span></a></li>
                 <li><a href=".\workorder.jsp"><span>Work Orders</span></a></li>
                 <li><a href=".\person.jsp"><span>Persons</span></a></li>
                 <li><a href=".\report.jsp"><span>Reports</span></a></li>
-                <li class='active'><a href=".\exit.jsp"><span>Exit</span></a></li>
+                <li class='last'><a href=".\exit.jsp"><span>Exit</span></a></li>
             </ul>
         </div>
-        <div id='exit'>
-             <br><br>
-            <strong> Pothole Exit Menu Item</strong>
-            <form action="MMSController?action=exit" method="POST" >
-                <strong>Exiting...</strong> 
-                <input type="submit" value="EXIT" />  
-            </form>  
+        <div id='potholes'> 
+            <form action="MMSController?action=potholes" method="POST">
+                <strong> Pothole Entry Menu Item</strong>
+                <br> <br>
+                <p>Enter new pothole repair request data:</p>
+                <p><label>*Location:</label> <input type="text" id="location" name="location" size="65" ></p>
+               <p><label>Severity:</label> <input type="number" id="severity" name="severity" size="2" ></p>
+               <p><label>Comments:</label> <input type="text" id="comments" name="comments" size="65"></p>
+                <p>*Required</p>
+                <input type="submit" value="Submit" />  
+                <div style="color: #FF0000;">${responseMessage}</div>   
+            </form> 
         </div>
     </body>
 </html>

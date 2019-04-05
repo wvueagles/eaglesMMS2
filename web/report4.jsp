@@ -23,20 +23,23 @@
         </div>
         <div id='report'> 
             <form action="MMSController?action=report" method="POST">
-                <strong> Pothole View Reports Menu Item</strong>
+                <strong> Reports Menu Item</strong>
                 <br> <br>
-                <p>Press POTHOLE to view MMS Pothole data.</p>
-                <input type="submit" value="POTHOLE"  />    
+                <p>Press POTHOLE to view pothole records.</p>
+                <input type="submit" value="POTHOLE" />    
                 ${responseMessage} 
                 <br><br>
-  <div align="center">
+   <c:if test="${pals} != null}">
+
+            
+<div align="center">
         <table border="1" cellpadding="5">
         <caption><h2>List of Pothole Record(s)</h2></caption>
         <tr><th>Work ID</th><th>Location</th><th>Severity</th><th>Create Date</th><th>Pothole Status</th>
         <th>Repair Status</th><th>Work Order Status</th><th>Repair Type</th><th>Work Type</th><th>Reporting Person</th>
     <th>Repair POC</th><th>Work POC</th><th>Pothole Update</th><th>Repair Update</th><th>work Update</th>
     <th>Closed Date</th><th>Pothole Comments</th><th>Repair Comments</th><th>Work Comments</th></tr>						
-		
+</c:if> 		
 <c:forEach items="${pals}" var="pal">
 <tr><td><c:out value="${pal.workid}" /></td>
     <td><c:out value="${pal.potholelocation}" /></td>
