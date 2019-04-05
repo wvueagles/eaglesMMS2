@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context docBase="C:\Users\pammt\Documents\NetBeansProjects\eaglesMMS2\build\web" path="/eaglesMMS">
+  <Resource auth="Container" driverClassName="org.postgresql.Driver" maxIdle="10" maxTotal="20" maxWaitMillis="-1" name="jdbc/postgres" password="admin" type="javax.sql.DataSource" url="jdbc:postgresql://localhost:5432/eagles_mms" username="postgres"/>
+</Context>
