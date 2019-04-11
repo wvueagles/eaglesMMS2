@@ -28,22 +28,134 @@ public class Dbquery {
     public Dbquery() {
     }
 
-    //returns a list of personreport rows in class structure
+    //open connections
+    public static void DbOpen() throws SQLException, ClassNotFoundException {
+        Class.forName("org.postgresql.Driver");
+        conn = DriverManager.getConnection(url, user, password);
+        stmt = conn.createStatement();
+    }
+
+    //close connections
+    public static void DbClose() throws SQLException {
+        if (stmt != null) {
+            stmt.close();
+        }
+        if (rs != null) {
+            rs.close();
+        }
+        if (conn != null) {
+            conn.close();
+        }
+    }
+
+// Updates a record into person table, returns the successful  updated record in personreport structure to person.jsp    
+    public static Personreport updatePerson(String personkey, String firstname, String lastname,
+            String address, String phone, String altphone, String email) throws ClassNotFoundException, SQLException, Exception {
+        String querystmt;
+        Personreport per = new Personreport();
+        try {
+            DbOpen();
+            querystmt
+                    = "UPDATE Person SET firstname='" + firstname
+                    + "', lastname='" + lastname
+                    + "', address ='" + address
+                    + "', phone ='" + phone
+                    + "', alternatephone ='" + altphone
+                    + "', emailaddress ='" + email
+                    + "' where personkey='" + personkey + "'";
+            int rslt = stmt.executeUpdate(querystmt);
+            // if (rslt < 1) return null;  //update failed
+            per = selectPersonreport("SELECT * FROM Personreport WHERE personkey ='" + personkey + "'");
+        } catch (SQLException | ClassNotFoundException e) {
+        } finally {
+            DbClose();
+        }
+        DbClose();
+        return per;
+    }
+
+    /* check if person primary key is duplicate */
+    public static boolean isPersonKeyDup(String personkey) throws ClassNotFoundException, SQLException, Exception {
+        String querystmt;
+        boolean isDup=true;
+        try {
+            DbOpen();
+            querystmt = "select count(personkey) from person where personkey='" + personkey + "'";
+            rs = stmt.executeQuery(querystmt);     // get table view results
+            if (rs.wasNull()) {
+                isDup= false; //no result found return null
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+        } finally {
+            DbClose();
+        }
+        DbClose();  //close connections
+        return isDup;// duplicate primary person key insert fails
+    }
+
+    /* inserts a record into person table, returns the successful inserted record in personreport sructure 
+    to person.jsp. If there is an exception a null structure is returned and the db and stmt connections are closed.
+     */
+    public static Personreport insertPerson(String personkey, String firstname, String lastname,
+            String address, String phone, String altphone, String email) throws ClassNotFoundException, SQLException, Exception {
+        String querystmt;
+        Personreport per = new Personreport();
+        try {
+            DbOpen();
+            querystmt = "INSERT into Person VALUES ('" + personkey + "','" + firstname + "','" + lastname + "','" + address + "','" + phone + "','" + altphone + "','" + email + "')";
+            int rslt = stmt.executeUpdate(querystmt);
+            // if (rslt < 1) return null;  //Insert failed
+        } catch (SQLException | ClassNotFoundException e) {
+        } finally {
+            DbClose();
+        }
+        per = selectPersonreport("Select * from personreport where personkey ='" + personkey + "'");
+        DbClose();  //close connections
+        return per; // if per is null select personreport errored out.
+    }
+
+//returns a personreport row in class structure for person.jsp activity
+// return a null if no person retrieved
+    public static Personreport selectPersonreport(String querystmt)
+            throws SQLException, Exception {
+
+        Personreport personreport = null;
+        int tableColCount;
+        try {
+            DbOpen();
+            rs = stmt.executeQuery(querystmt);     // get table view results
+            if (!rs.wasNull()) {
+                personreport = new Personreport();
+                rsmd = rs.getMetaData();  //get result meta data
+                tableColCount = rsmd.getColumnCount();
+                while (rs.next()) {           //should be only one row since searching on primary key
+                    for (int i = 1; i <= tableColCount; i++) {     //loop for each column
+                        // copy result set into table structure
+                        personreport.setStringField(rsmd.getColumnName(i), rs.getString(i));
+                    }
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+        } finally {
+            DbClose();
+        }
+        DbClose();  //close connections
+        return personreport;
+    }
+
+    //returns a list of personreport rows in class structure to view in report.jsp
     public static List<Personreport> selectPersonreports(String querystmt)
             throws SQLException, Exception {
-       
         List<Personreport> personreports = new ArrayList<>();
         int tableColCount;
         try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(url, user, password);
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(querystmt);     // get table view results
+            DbOpen();
+            rs = stmt.executeQuery(querystmt);
             rsmd = rs.getMetaData();   //get result meta data
             tableColCount = rsmd.getColumnCount();
             while (rs.next()) {           //loop for each row          
-                 Personreport personreport = new Personreport();
-                 for (int i = 1; i < tableColCount; i++) {     //loop for each column
+                Personreport personreport = new Personreport();
+                for (int i = 1; i <= tableColCount; i++) {     //loop for each column
                     // copy result set into table structure
                     personreport.setStringField(rsmd.getColumnName(i), rs.getString(i));
                 }
@@ -51,30 +163,21 @@ public class Dbquery {
             }
         } catch (SQLException | ClassNotFoundException e) {
         } finally {
-            // Close connections
-            if (stmt != null) {
-                stmt.close();
-            }
-            if (rs != null) {
-                rs.close();
-            }
-            if (conn != null) {
-                conn.close();
-            }
+            DbClose();  //close connections
         }
+        DbClose();  //close connections
         return personreports;
     }
- //returns a list of pothole all tables & rows in class structure
+    //returns a list of pothole all tables & rows in class structure for report.jsp
+
     public static List<Potholeallreport> selectPotholeallreports(String querystmt)
             throws SQLException, Exception {
-        
+
         List<Potholeallreport> pals = new ArrayList<>();
         int tableColCount;
         try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(url, user, password);
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(querystmt);     // get table view results
+            DbOpen();
+            rs = stmt.executeQuery(querystmt);
             rsmd = rs.getMetaData();   //get result meta data
             tableColCount = rsmd.getColumnCount();
             while (rs.next()) {           //loop for each row 
@@ -87,51 +190,9 @@ public class Dbquery {
             }
         } catch (SQLException | ClassNotFoundException e) {
         } finally {
-            // Close connections
-            if (stmt != null) {
-                stmt.close();
-            }
-            if (rs != null) {
-                rs.close();
-            }
-            if (conn != null) {
-                conn.close();
-            }
+            DbClose();  //close connections
         }
+        DbClose();  //close connections
         return pals;
     }
-//returns a list of pothole all tables & rows in class structure
-    public static Potholeallreport selectPotholeallreport(String querystmt)
-            throws SQLException, Exception {
-        Potholeallreport pal = new Potholeallreport();
-        int tableColCount;
-        try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(url, user, password);
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(querystmt);     // get table view results
-            rsmd = rs.getMetaData();   //get result meta data
-            tableColCount = rsmd.getColumnCount();
-            while (rs.next()) {           //loop for each row          
-                for (int i = 1; i < tableColCount; i++) {     //loop for each column
-                    // copy result set into table structure
-                    pal.setStringField(rsmd.getColumnName(i), rs.getString(i));
-                }
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-        } finally {
-            // Close connections
-            if (stmt != null) {
-                stmt.close();
-            }
-            if (rs != null) {
-                rs.close();
-            }
-            if (conn != null) {
-                conn.close();
-            }
-        }
-        return pal;
-    }
-
 }
