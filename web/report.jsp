@@ -59,7 +59,7 @@
     <td><c:out value="${pal.workorderupdateddae}" /></td>
     <td><c:out value="${pal.potholeclosedtime}" /></td>
     <td><c:out value="${pal.potholecomments}" /></td>
-    <td><c:out value="${pal.repaircomments}" /></td>
+    <td><c:out value="${pal.repaircomments}" /></td>  
     <td><c:out value="${pal.workordercomments}" /></td></tr>                    
 </c:forEach></table>
 </c:if>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>MMS Eagles Pothole System</title>
+        <title>MMS Eagles Pothole System </title>
         <meta charset='utf-8'/>
         <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -21,16 +21,26 @@
                 <li class='last'><a href=".\exit.jsp"><span>Exit</span></a></li>
             </ul>
         </div>
-
         <div id='repair'> 
             <form action="MMSController?action=repair" method="POST">
-                <strong> Pothole Repair Menu Item</strong>
-                <br> <br>
-                <p>Enter Work Order ID (required): <input type="text" id="workid" name="workid" ></p>
-                <br> <br>
-                <p>Pothole Repair record status retrieval and updates coming soon.</p>
-                <input type="submit" value="Request Repair Order" />  
-                <div style="color: #FF0000;">${responseMessage}</div>   
+                <strong> Repair Menu Item</strong>
+                <br><br>
+                <p>Press SEARCH to display a repair record by  Work ID:  <input type="text" pattern="[0-9]+" name="searchkey" />  <input type="submit" name="SEARCH" value="SEARCH" /></p>   
+                <p>Press UPDATE to update displayed repair record. <input type="submit" name="UPDATE" value="UPDATE"  /></p>
+                <p>Press CLEAR to reset the report form.  <input type="submit" name="CLEAR" value="CLEAR" /></p>           
+                <div style="color: #FF0000;">${responseMessage}</div>  
+                <br><br>
+                <table>
+                    <p><label>Work ID:     </label><input type="text" name="pot.workid"  value="${pot.workid}"  style="background: #D3D3D3;" readonly /></p>
+                    <p><label>Status:     </label><input type="text" name="pot.repairstatus"   pattern="[a-zA-Z]+"  title="Valid User Repair status values are: REPAIRED, FAIL, PASS or WIP" minlength="0"  maxlenth="20" value="${pot.repairstatus}"  /></p>
+                    <p><label>Type:     </label><input type="text" name="pot.repairordertype"   value="${pot.repairordertype}" style="background: #D3D3D3;" readonly /></p> 
+                    <p><label>Comments:        </label><input type="text" name="pot.repaircomments" pattern="[0-9a-zA-Z ,-]{0,59}" title="Repair Comment format is letter, numbers, spaces, commas, and dash. No special characters."  style="width: 300px;"  maxlenth="60"   value="${pot.repaircomments}" /></p> 
+                    <p><label>Create Date:    </label><input type="text" name="pot.createddate"   maxlenth="60"   value="${pot.createddate}"  style="background: #D3D3D3;" readonly /></p>  
+                     <p><label>Last Updated:     </label><input type="text" name="pot.repairupdateddate"   maxlenth="60"   value="${pot.repairupdateddate}"  style="background: #D3D3D3;" readonly /></p>  
+                     <p><label>Closed Date:     </label><input type="text" name="pot.potholeclosedtime"   maxlenth="60"   value="${pot.potholeclosedtime}"  style="background: #D3D3D3;" readonly /></p> 
+               <p>Valid User Repair status values are: REPAIRED, FAIL, PASS or WIP</p>
+                <p>Shaded boxes are read only fields.</p>
+                </table>  
             </form> 
         </div>
     </body>

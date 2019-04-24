@@ -25,23 +25,26 @@
             <form action="MMSController?action=person" method="POST">
                 <strong> Person Menu Item</strong>
                 <br><br>
-                <p>Press INSERT to enter a person record. <input type="submit" name="INSERT" value="INSERT"  /></p>
-                <p>Press SEARCH to display a person record by User Name:  <input type="text" name="searchkey" />  <input type="submit" name="SEARCH" value="SEARCH" /></p>   
+                <p>Press ADD to enter a person record. <input type="submit" name="ADD" value="ADD"  /></p>
+                <p>Press SEARCH to display a person record by User Name:  <input type="text" name="searchkey"  value="${searchkey}"  />  <input type="submit" name="SEARCH" value="SEARCH" /></p>   
                 <p>Press UPDATE to update displayed person record. <input type="submit" name="UPDATE" value="UPDATE"  /></p>
                 <p>Press CLEAR to reset the report form.  <input type="submit" name="CLEAR" value="CLEAR" /></p>           
                 <div style="color: #FF0000;">${responseMessage}</div>  
                 <br><br>
                 <table>
                     <p><label>User  Name:     </label><input type="text" name="per.personkey"  value="${per.personkey}"  style="background: #D3D3D3;" readonly /></p>
-                    <p><label>*First Name:     </label><input type="text" name="per.firstname"   pattern="[a-zA-Z]+" minlength="0"  maxlenth="20" value="${per.firstname}"  /></p>
-                    <p><label>*Last  Name:     </label><input type="text" name="per.lastname" pattern="[a-zA-Z]+" minlength="0"  maxlenth="30"  value="${per.lastname}"  /></p> 
-                    <p><label>Address:        </label><input type="text" name="per.address"   maxlenth="60"   value="${per.address}" /></p> 
-                    <p><label>Phone:          </label><input type="text" name="per.phone"  maxlenth="20"  value="${per.phone}" /></p> 
+                    <p><label>*First Name:     </label><input type="text" name="per.firstname"   pattern="[a-zA-Z]+" title="Valid First name is all letters." minlength="0"  maxlenth="20" value="${per.firstname}"  /></p>
+                    <p><label>*Last  Name:     </label><input type="text" name="per.lastname" pattern="[a-zA-Z]+"  title="Valid Last name is all letters." minlength="0"  maxlenth="30"  value="${per.lastname}"  /></p> 
+                    <p><label>Address:        </label><input type="text" name="per.address"  pattern="[0-9a-zA-Z ,-]+" title="Valid address format is letter, numbers, spaces, commas, and dash. No special characters."  maxlenth="60"   value="${per.address}" /></p> 
+                    <p><label>Phone:          </label><input type="text" name="per.phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"  title="Valid phone format is xxx-xxx-xxxx" maxlenth="20"  value="${per.phone}" /></p> 
                     <p><label>Alternate Phone:</label><input type="text"  name="per.alternatephone" maxlenth="20"   value="${per.alternatephone}" /></p> 
-                    <p><label>Email Address:  </label><input type="text" name="per.emailaddress" maxlenth="30"  value="${per.emailaddress}" /></p>
+                    <p><label>Email Address:  </label><input type="text" name="per.emailaddress" pattern="^[A-Za-z0-9+_.-]+@(.+)$"  title="Valid email address format is user@domain, dashes and dots are permitted." maxlenth="30"  value="${per.emailaddress}" /></p>
                     <p><label>Created Date:   </label><input type="text" name="per.createddate"  value="${per.createddate}" style="background: #D3D3D3;" readonly /></p> 
                     <p><label>Updated Date:   </label><input type="text" name="per.updateddate"  value="${per.updateddate}" style="background:#D3D3D3;" readonly/></p> 
-                    <p>*Required Fields</p></table>  
+                    <p>*Required Fields on Add</p>
+                    <p>Shaded boxes are read only fields.</p>
+                    <p>The system creates the user name by adding the first name initial in front of their last name.</p>
+                </table>  
             </form> 
         </div>
     </body>

@@ -7,6 +7,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.IOException;
 import java.sql.*;
 import java.util.logging.Level;
@@ -72,8 +74,8 @@ public class MMSController extends HttpServlet {
     private static String url;
     private static String user;
     private static String password;
-    private static Boolean isViewOnly;
-    static String mmsrelease = "3.00";  // if time permits move this to servlet init to pull from DB 
+
+    static String mmsrelease = "2.00";  // if time permits move this to servlet init to pull from DB 
     //if db connection and issue Home page should display Warning Message
 
     @Override
@@ -81,17 +83,19 @@ public class MMSController extends HttpServlet {
         super.init(config);
 
         // Read RDS connection information from the environment
-        if (System.getProperty("RDS_HOSTNAME") == null) {
+        
+        if (System.getProperty("RDS_HOSTNAME")==null) {
             url = "jdbc:postgresql://localhost:5432/eagles_mms";
             user = "postgres";
             password = "admin";
-        } else {
-            String hostname = System.getProperty("RDS_HOSTNAME");
-            String dbName = System.getProperty("RDS_DB_NAME");
-            user = System.getProperty("RDS_USERNAME");
-            password = System.getProperty("RDS_PASSWORD");
-            String port = System.getProperty("RDS_PORT");
-            url = "jdbc:postgresql://" + hostname + ":" + port + "/" + dbName;
+        }
+        else {
+        String hostname = System.getProperty("RDS_HOSTNAME");
+        String dbName = System.getProperty("RDS_DB_NAME");
+        user = System.getProperty("RDS_USERNAME");
+        password = System.getProperty("RDS_PASSWORD");
+        String port = System.getProperty("RDS_PORT");
+        url = "jdbc:postgresql://" + hostname + ":" + port + "/" + dbName;
         }
     }
 
@@ -140,7 +144,9 @@ public class MMSController extends HttpServlet {
         List<Potholeallreport> pals = new ArrayList<Potholeallreport>();
         List<Personreport> pers = new ArrayList<Personreport>();
         String action = request.getParameter("action");
-
+        String workid = "", location = "", severity = "", comments = "", status = "", type = "";
+        int id = 0;
+        Connection conn = null;
         request.setAttribute("mmsrelease", mmsrelease);
         switch (action) {
             //TODO we propably do need an exit to clear data not sure what data yet
@@ -156,34 +162,45 @@ public class MMSController extends HttpServlet {
                 try {
                     String responseMessage = "";
                     String searchkey = "";
-                    int intSearchkey = 0;
                     Potholeallreport pot_set = new Potholeallreport();
+                    Potholeallreport pot_val = new Potholeallreport();
                     Potholeallreport pot = new Potholeallreport();
+                    String[] validStatus = {"OPEN", "CLOSED"};
                     pot_set.setWorkid(request.getParameter("pot.workid").toLowerCase());
                     pot_set.setPotholelocation(request.getParameter("pot.potholelocation"));
                     pot_set.setSeverity(request.getParameter("pot.severity"));
                     pot_set.setPotholestatus(request.getParameter("pot.potholestatus"));
                     pot_set.setReportingpersonkey(request.getParameter("pot.reportingpersonkey"));
-                    pot_set.setPotholecomments(request.getParameter("pot.potholecomments"));
-                    pot_set.setCreateddate(request.getParameter("pot.createdate"));
-                    pot_set.setPotholeupdateddate(request.getParameter("pot.potholeupdateddate"));
-                    pot_set.setPotholeclosedtime(request.getParameter("pot.potholeclosedtime"));
+                    
+                    //fill validation structure
+                    if (pot_set.getWorkid() != null && !pot_set.getWorkid().equals("")){
+                        searchkey = pot_set.getWorkid();
+                        if (validateInt(searchkey)) {
+                            request.setAttribute("responseMessage", "A valid search key must be entered.");
+                            request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
+                            request.getRequestDispatcher("/potholes.jsp").forward(request, response);
+                            break;
+                        }
+                        pot_val = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
+                        if (pot_val == null) {
+                            request.setAttribute("responseMessage", "Pothole record not found. Verify Search Work ID.");
+                            request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
+                        }
+                    }
+                    
                     //POTHOLE INSERT
                     if (null != request.getParameter("INSERT")) {
-                        if (null != pot_set.getWorkid() && pot_set.getWorkid().trim().length() > 1 ) {
-                            request.setAttribute("responseMessage", "This Pothole Work ID is a duplicate. Please press CLEAR and re-enter pothole data.");
+                        if (contains(validStatus, pot_set.getPotholestatus())){
+                            request.setAttribute("responseMessage", "Repair status must be OPEN or CLOSED.");
                             request.setAttribute("pot", pot_set);  //return record for corrections
-                        } else if (null != pot_set.getPotholelocation() && pot_set.getPotholelocation().length() <4) {
-                            request.setAttribute("responseMessage", "Pothole Location is required and must contain a street address.");
+                        }else if (validateInt(severity) || Integer.parseInt(severity) < 0 || Integer.parseInt(severity) > 5){
+                            request.setAttribute("responseMessage", "Severity status must be an integer between 1 and 5");
                             request.setAttribute("pot", pot_set);  //return record for corrections
-                        } else {
-                            if (null != pot_set.getSeverity() && pot_set.getSeverity().length() < 1) {
-                                pot_set.setSeverity("1");
-                            }
-                            intSearchkey = Dbquery.insertPothole(pot_set.getPotholelocation(), pot_set.getSeverity(), pot_set.getReportingpersonkey(), pot_set.getPotholecomments());
-                            if (intSearchkey > 0) {   //person record successfully update in db
+                        }else {
+                            if (Dbquery.insertPothole("OPEN",  pot_set.getPotholelocation(), pot_set.getSeverity(), pot_set.getReportingpersonkey(), pot_set.getPotholecomments())) {
+                                //person record successfully update in db
                                 //try to retrtrieve for viewing
-                                pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + intSearchkey + "'");
+                                pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
                                 request.setAttribute("responseMessage", "Pothole record inserted");
                                 request.setAttribute("pot", pot);   //return retrieved person   
                             } else {
@@ -195,22 +212,17 @@ public class MMSController extends HttpServlet {
                         break;
                     }//POTHOLE SEARCH
                     else if (null != request.getParameter("SEARCH")) {
-                        isViewOnly = false;
                         searchkey = request.getParameter("searchkey");
-                        if (null !=searchkey && (searchkey.trim()).length() < 1) {
+                        if (validateInt(searchkey)) {
                             request.setAttribute("responseMessage", "A valid search key must be entered.");
                             request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
                             request.getRequestDispatcher("/potholes.jsp").forward(request, response);
                             break;
-                        } else searchkey=searchkey.trim();
+                        }
                         pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
                         if (pot == null) {
                             request.setAttribute("responseMessage", "Pothole record not found. Verify Search Work ID.");
                             request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
-                        } else if (pot.getPotholestatus().equals("CLOSE")) {
-                            isViewOnly = true;
-                            request.setAttribute("responseMessage", "Pothole record  is closed. User may view only.");
-                            request.setAttribute("pot", pot);   //return retrieved person 
                         } else {
                             request.setAttribute("responseMessage", "Pothole record retrieved for update.");
                             request.setAttribute("pot", pot);   //return retrieved person 
@@ -219,17 +231,18 @@ public class MMSController extends HttpServlet {
                         break;
                     } //POTHOLE UPDATE
                     else if (null != request.getParameter("UPDATE")) {
-                        if (pot_set.getWorkid().length() < 1) {
-                            request.setAttribute("responseMessage", "You must retrieve a Pothole record using SEARCH before pressing UPDATE.");
-                        } else if (isViewOnly) {
-                            request.setAttribute("responseMessage", "Pothole is closed, no changes can be made.");
-                            request.setAttribute("pot", pot_set);  //return record to still view                        
-                        } else if (null != pot_set.getSeverity() && pot_set.getSeverity().length() < 1) {
+                        if (contains(validStatus, pot_set.getPotholestatus())){
+                            request.setAttribute("responseMessage", "Repair status must be OPEN or CLOSED.");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
+                        }else if (validateInt(severity) || Integer.parseInt(severity) < 0 || Integer.parseInt(severity) > 5){
                             request.setAttribute("responseMessage", "Severity status must be an integer between 1 and 5");
                             request.setAttribute("pot", pot_set);  //return record for corrections
-                        } else {
+                        }else if (pot_val.getPotholestatus().equals("CLOSED")){
+                            request.setAttribute("responseMessage", "Pothole is closed, no changes can be made");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
+                        }else {
                             searchkey = pot_set.getWorkid();
-                            if (Dbquery.updatePothole(pot_set.getWorkid(), pot_set.getReportingpersonkey(), pot_set.getPotholelocation(), pot_set.getSeverity(), pot_set.getPotholecomments())) {
+                            if (Dbquery.updatePothole(pot_set.getWorkid(), pot_set.getPotholestatus(), pot_set.getReportingpersonkey(), pot_set.getPotholelocation(), pot_set.getSeverity(), pot_set.getPotholecomments())) {
                                 //person record successfully update in db
                                 //try to retrtrieve for viewing
                                 pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
@@ -368,20 +381,34 @@ public class MMSController extends HttpServlet {
                     String responseMessage = "";
                     String searchkey = "";
                     Potholeallreport pot_set = new Potholeallreport();
+                    Potholeallreport pot_val = new Potholeallreport();
                     Potholeallreport pot = new Potholeallreport();
-                    String validStatus = "REPAIRED FAIL PASS WIP";
-                    pot_set.setWorkid(request.getParameter("pot.workid"));
+                    String[] validStatus = {"LOGGED", "QUEUED", "REPAIRED", "FAIL", "PASS", "WIP"};
+                    pot_set.setWorkid(request.getParameter("pot.workid").toLowerCase());
                     pot_set.setRepairstatus(request.getParameter("pot.repairstatus"));
                     pot_set.setRepairordertype(request.getParameter("pot.repairordertype"));
                     pot_set.setRepaircomments(request.getParameter("pot.repaircomments"));
-                    pot_set.setCreateddate(request.getParameter("pot.createdate"));
-                    pot_set.setRepairupdateddate(request.getParameter("pot.repairupdateddate"));
-                    pot_set.setPotholeclosedtime(request.getParameter("pot.potholeclosedtime"));
+                    
+                    //fill validation structure
+                    if (pot_set.getWorkid() != null && !pot_set.getWorkid().equals("")){
+                        searchkey = pot_set.getWorkid();
+                        if (validateInt(searchkey)) {
+                            request.setAttribute("responseMessage", "A valid search key must be entered.");
+                            request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
+                            request.getRequestDispatcher("/potholes.jsp").forward(request, response);
+                            break;
+                        }
+                        pot_val = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
+                        if (pot_val == null) {
+                            request.setAttribute("responseMessage", "Pothole record not found. Verify Search Work ID.");
+                            request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
+                        }
+                    }
+                    
                     //REPAIR SEARCH
                     if (null != request.getParameter("SEARCH")) {
-                        isViewOnly = false;
                         searchkey = request.getParameter("searchkey");
-                        if ((searchkey).length() < 1) {
+                        if (validateInt(searchkey)) {
                             request.setAttribute("responseMessage", "A valid search key must be entered.");
                             request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
                             request.getRequestDispatcher("/repair.jsp").forward(request, response);
@@ -392,40 +419,28 @@ public class MMSController extends HttpServlet {
                             request.setAttribute("responseMessage", "Repair record not found. Verify Search Work ID.");
                             request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
                         } else {
-                            if (pot.getPotholestatus().equals("CLOSE")) {
-                                isViewOnly = true;
-                                request.setAttribute("responseMessage", "Repair record  is a closed. User may view only.");
-                            } else if (pot.getWorkorderstatus().equals("HOLD")) {
-                                isViewOnly = true;
-                                request.setAttribute("responseMessage", "Repair work is on HOLD. User may view only.");
-                            } else if (!pot.getWorkorderstatus().equals("APPROVE")) {
-                                isViewOnly = true;
-                                request.setAttribute("responseMessage", "Repair work order is still waiting approval. User may view only.");
-                            } else {
-                                isViewOnly = false;
-                                request.setAttribute("responseMessage", "Repair record retrieved for update.");
-                            }
+                            request.setAttribute("responseMessage", "Repair record retrieved for update.");
+                            request.setAttribute("pot", pot);   //return retrieved person 
                         }
-                        request.setAttribute("pot", pot);   //return retrieved person 
                         request.getRequestDispatcher("/repair.jsp").forward(request, response);
                         break;
                     } //REPAIR UPDATE
                     else if (null != request.getParameter("UPDATE")) {
-                        if (pot_set.getWorkid().length() < 1) {
-                            request.setAttribute("responseMessage", "You must retrieve a Repair record using SEARCH before pressing UPDATE.");
-                        } else if (isViewOnly) {
-                            request.setAttribute("responseMessage", "This Repair record is view only.");
-                            request.setAttribute("pot", pot_set);  //return record to still view   
-
-                        } else if (null !=pot_set.getRepairstatus() && !validStatus.contains(pot_set.getRepairstatus().toUpperCase().trim())) {
-                            request.setAttribute("responseMessage", "Repair status must be REPAIRED, FAIL, PASS, or WIP.");
-                            request.setAttribute("pot", pot_set);  //return record for corrections                       
+                        if (contains(validStatus, pot_set.getRepairstatus())){
+                            request.setAttribute("responseMessage", "Repair status must be LOGGED, QUEUED, REPAIRED, FAIL, PASS, or WIP.");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
+                        } else if (pot_val.getPotholestatus().equals("CLOSED")){
+                            request.setAttribute("responseMessage", "Pothole is CLOSED, no changes can be made");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
+                        } else if (pot_val.getWorkorderstatus().equals("APPROVED") && (!pot_set.getRepairstatus().equals("REPAIRED") && !pot_set.getRepairstatus().equals("FAIL") && !pot_set.getRepairstatus().equals("PASS") && !pot_set.getRepairstatus().equals("WIP"))){
+                            request.setAttribute("responseMessage", "APPROVED work order repairs must be updated to REPAIRED, FAIL, PASS, or WIP");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
+                        } else if (!pot_val.getWorkorderstatus().equals("APPROVED") && !pot_set.getRepairstatus().equals(pot_val.getRepairstatus())){
+                            request.setAttribute("responseMessage", "Repair status can only be updated when work order is in APPROVED state");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
                         } else {
-                            searchkey = pot_set.getWorkid().trim();
-                            pot_set.setRepairstatus(pot_set.getRepairstatus().toUpperCase().trim());
-                            // to prevent looping when updating system auto status
-                            if (pot_set.getRepairstatus().equals("REPAIRED")) pot_set.setRepairstatus("SYSREPAIRED");
-                            if (Dbquery.updateRepair(pot_set.getWorkid(), pot_set.getRepairstatus(), pot_set.getRepaircomments())) {
+                            searchkey = pot_set.getWorkid();
+                            if (Dbquery.updateWorkorder(pot_set.getWorkid(), pot_set.getRepairstatus(), pot_set.getRepaircomments())) {
                                 //person record successfully update in db
                                 //try to retrtrieve for viewing
                                 pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
@@ -458,54 +473,60 @@ public class MMSController extends HttpServlet {
                     String responseMessage = "";
                     String searchkey = "";
                     Potholeallreport pot_set = new Potholeallreport();
+                    Potholeallreport pot_val = new Potholeallreport();
                     Potholeallreport pot = new Potholeallreport();
-                    String validStatus = "DENY APPROVE HOLD CLOSE";
-                    pot_set.setWorkid(request.getParameter("pot.workid"));
-                    pot_set.setWorkorderstatus(request.getParameter("pot.workorderstatus"));
-                    pot_set.setWorkordertype(request.getParameter("pot.workordertype"));
-                    pot_set.setWorkordercomments(request.getParameter("pot.workordercomments"));
-                    pot_set.setCreateddate(request.getParameter("pot.createdate"));
-                    pot_set.setWorkorderupdateddae(request.getParameter("pot.workorderupdateddae"));
-                    pot_set.setPotholeclosedtime(request.getParameter("pot.potholeclosedtime"));
+                    String[] validStatus = {"OPEN", "DENY", "APPROVE", "HOLD", "CLOSE"};
+                    pot_set.setWorkid(request.getParameter("pot.workid").toLowerCase());
+                    pot_set.setRepairstatus(request.getParameter("pot.workorderstatus"));
+                    pot_set.setRepairordertype(request.getParameter("pot.workordertype"));
+                    pot_set.setRepaircomments(request.getParameter("pot.workordercomments"));
+                    
+                    //fill validation structure
+                    if (pot_set.getWorkid() != null && !pot_set.getWorkid().equals("")){
+                        searchkey = pot_set.getWorkid();
+                        if (validateInt(searchkey)) {
+                            request.setAttribute("responseMessage", "A valid search key must be entered.");
+                            request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
+                            request.getRequestDispatcher("/potholes.jsp").forward(request, response);
+                            break;
+                        }
+                        pot_val = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
+                        if (pot_val == null) {
+                            request.setAttribute("responseMessage", "Pothole record not found. Verify Search Work ID.");
+                            request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
+                        }
+                    }
+                    
                     //WORKORDER SEARCH
                     if (null != request.getParameter("SEARCH")) {
-                        searchkey = request.getParameter("searchkey");                        
-                        if (null != searchkey && (searchkey.trim().length() < 1)) {
+                        searchkey = request.getParameter("searchkey");
+                        if (validateInt(searchkey)) {
                             request.setAttribute("responseMessage", "A valid search key must be entered.");
                             request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
                             request.getRequestDispatcher("/workorder.jsp").forward(request, response);
                             break;
                         }
-                        searchkey=searchkey.trim();
                         pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
                         if (pot == null) {
                             request.setAttribute("responseMessage", "Work order record not found. Verify Search Work ID.");
                             request.setAttribute("searchkey", searchkey);  //return searchkey for corrections
-                        } else if (null !=pot.getPotholestatus() &&  pot.getPotholestatus().equals("CLOSE")) {
-                            isViewOnly = true;
-                            request.setAttribute("responseMessage", "Work Order record is a closed. User may view only.");
-                        request.setAttribute("pot", pot);   //return retrieved person 
                         } else {
-                            isViewOnly = false;
                             request.setAttribute("responseMessage", "Work order record retrieved for update.");
                             request.setAttribute("pot", pot);   //return retrieved person 
                         }
-                        request.getRequestDispatcher("/workorder.jsp").forward(request, response);
+                        request.getRequestDispatcher("/repair.jsp").forward(request, response);
                         break;
                     } //WORKORDER UPDATE
                     else if (null != request.getParameter("UPDATE")) {
-                        if (null != pot_set.getWorkid() && pot_set.getWorkid().length() < 1) {
-                            request.setAttribute("responseMessage", "You must retrieve a Work Order record using SEARCH before pressing UPDATE.");
-                        } else if (isViewOnly) {
-                            request.setAttribute("responseMessage", "This Work Order record is view only.");
-                            request.setAttribute("pot", pot_set);  //return record to still view      
-
-                        } else if (!validStatus.contains(pot_set.getWorkorderstatus().toUpperCase().trim())) {
-                            request.setAttribute("responseMessage", "Work order status must be DENY, APPROVE, HOLD or CLOSE.");
+                        if (contains(validStatus, pot_set.getRepairstatus())){
+                            request.setAttribute("responseMessage", "Work order status must be OPEN, DENY, APPROVE, HOLD or CLOSE.");
+                            request.setAttribute("pot", pot_set);  //return record for corrections
+                        } else if (pot_val.getPotholestatus().equals("CLOSED")){
+                            request.setAttribute("responseMessage", "Pothole is CLOSED, no changes can be made");
                             request.setAttribute("pot", pot_set);  //return record for corrections
                         } else {
                             searchkey = pot_set.getWorkid();
-                            if (Dbquery.updateWorkorder(pot_set.getWorkid(), pot_set.getWorkorderstatus().toUpperCase().trim(), pot_set.getWorkordercomments())) {
+                            if (Dbquery.updateRepair(pot_set.getWorkid(), pot_set.getWorkorderstatus(), pot_set.getWorkordercomments())) {
                                 //person record successfully update in db
                                 //try to retrtrieve for viewing
                                 pot = Dbquery.selectPotholeallreport("SELECT * FROM Potholeallreport WHERE workid = '" + searchkey + "'");
@@ -604,10 +625,23 @@ public class MMSController extends HttpServlet {
         realPath = getServletContext().getRealPath("");
     }
 
+    private static Boolean validateString(String input) {
+        Pattern p = Pattern.compile("[^a-z0-9,. ]", Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(input);
+        return !(m.find());
+    }
 
-
+    private static Boolean validateInt(String input) {
+        try {
+            Integer.parseInt(input);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
     public static boolean contains(String[] arr, String targetValue) {
-        return Arrays.asList(arr).contains(targetValue);
+	return Arrays.asList(arr).contains(targetValue);
     }
 
     public static String getFilePath() {

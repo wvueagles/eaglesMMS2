@@ -109,7 +109,7 @@ public class Dbquery {
             DbOpen();
             querystmt = "INSERT into Person VALUES ('" + personkey + "','" + firstname + "','" + lastname + "','" + address + "','" + phone + "','" + altphone + "','" + email + "')";
             if (stmt.executeUpdate(querystmt)==0) isInserted=false;  //Insert fail
-            else conn.commit(); 
+            else  conn.commit(); 
         } catch (SQLException | ClassNotFoundException e) {
         } finally {
             DbClose();
@@ -187,7 +187,7 @@ public class Dbquery {
             tableColCount = rsmd.getColumnCount();
             while (rs.next()) {           //loop for each row 
                 Potholeallreport pal = new Potholeallreport();
-                for (int i = 1; i <= tableColCount; i++) {     //loop for each column
+                for (int i = 1; i < tableColCount; i++) {     //loop for each column
                     // copy result set into table structure
                     pal.setStringField(rsmd.getColumnName(i), rs.getString(i));
                 }
@@ -205,18 +205,14 @@ public class Dbquery {
     /* inserts a record into pothole table, returns the successful inserted record in potholeallreport sructure 
     to pothole.jsp. If there is an exception a null structure is returned and the db and stmt connections are closed.
      */ 
-    public static int insertPothole( String location, String severity, String reportingpersonkey, String comments )throws ClassNotFoundException, SQLException, Exception {
+    public static boolean insertPothole( String status,  String location, String severity, String reportingpersonkey, String comments )throws ClassNotFoundException, SQLException, Exception {
         String querystmt;
-        int isInserted=0;
+        boolean isInserted=true;
         try {
-            DbOpen(); 
+            DbOpen();
            querystmt = "insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('"+location+ "'," + severity + ",'" + reportingpersonkey + "','" + comments  + "')";
-            if (stmt.executeUpdate(querystmt,Statement.RETURN_GENERATED_KEYS)==0) isInserted=0;  //Insert fail
-            else {   
-            rs = stmt.getGeneratedKeys();
-            if (rs.next()) isInserted = rs.getInt(1);                            
-            conn.commit();
-            } 
+            if (stmt.executeUpdate(querystmt)==0) isInserted=false;  //Insert fail
+            else  conn.commit(); 
         } catch (SQLException | ClassNotFoundException e) {
         } finally {
             DbClose();
@@ -239,83 +235,18 @@ public class Dbquery {
                 potholeallreport = new Potholeallreport();
                 rsmd = rs.getMetaData();  //get result meta data
                 tableColCount = rsmd.getColumnCount();
-                  //should be only one row since searching on primary key
-                    for (int i = 1; i  <= tableColCount; i++) {     //loop for each column
+                do {           //should be only one row since searching on primary key
+                    for (int i = 1; i <= tableColCount; i++) {     //loop for each column
                         // copy result set into table structure
                         potholeallreport.setStringField(rsmd.getColumnName(i), rs.getString(i));
                     }
-            } else potholeallreport=null;
+                }  while (rs.next());
+            }
         } catch (SQLException e) {
         } finally {
             DbClose();
         }
         DbClose();
         return potholeallreport;
-    }
-    
-    // Updates a record into repair table, returns the successful  updated record in potholeallreport structure to repair.jsp    
-    public static boolean updateRepair(String workid, String status, String comments) throws ClassNotFoundException, SQLException, Exception {
-        String querystmt;
-        boolean isUpdated = true;
-        try {
-            DbOpen();
-            querystmt
-                    = "UPDATE Repair SET status= CAST('" + status + "' as repair_status) "
-                    + ", comments='" + comments + "' where workid=" + workid;
-            if (stmt.executeUpdate(querystmt) ==0) isUpdated=false;  //update failed
-            else {
-                conn.commit();
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-        } finally {
-            DbClose();
-        }
-        DbClose();
-        return isUpdated;
-    }
-    
-        // Updates a record into work order table, returns the successful  updated record in potholeallreport structure to workorder.jsp    
-    public static boolean updateWorkorder(String workid, String status, String comments) throws ClassNotFoundException, SQLException, Exception {
-        String querystmt;
-        boolean isUpdated = true;
-        try {
-            DbOpen();
-            querystmt
-                    = "UPDATE Workorder SET status= CAST('" + status + "' as workorder_status) "
-                    + ", comments='" + comments + "' where workid=" + workid;
-            if (stmt.executeUpdate(querystmt) ==0) isUpdated=false;  //update failed
-            else {
-                conn.commit();
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-        } finally {
-            DbClose();
-        }
-        DbClose();
-        return isUpdated;
-    }
-    
-         // Updates a record into pothole table, returns the successful  updated record in potholeallreport structure to potholes.jsp    
-    public static boolean updatePothole(String workid, String reportingpersonkey, String location, String severity, String comments) throws ClassNotFoundException, SQLException, Exception {
-        String querystmt;
-        boolean isUpdated = true;
-        try {
-            DbOpen();
-            querystmt
-                    = "UPDATE Potholes SET reportingpersonkey='" + reportingpersonkey
-                    + "', location='" + location
-                    + "', severity='" + severity
-                    + "', comments='" + comments
-                    + "' where workid='" + workid + "'";
-            if (stmt.executeUpdate(querystmt) ==0) isUpdated=false;  //update failed
-            else {
-                conn.commit();
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-        } finally {
-            DbClose();
-        }
-        DbClose();
-        return isUpdated;
     }
 }
