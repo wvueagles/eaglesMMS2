@@ -1,0 +1,411 @@
+--Sprint 3.0 final db script
+ 
+--Create Type
+CREATE TYPE pothole_status AS ENUM ('OPEN', 'CLOSE');
+CREATE TYPE workorder_status AS ENUM ('OPEN', 'DENY', 'HOLD', 'APPROVE','CLOSE');
+CREATE TYPE repair_status AS ENUM ('SYSREPAIRED', 'LOGGED', 'QUEUED', 'HOLD', 'REPAIRED', 'FAIL', 'PASS', 'WIP');
+
+-- Table: public.mmsrelease
+
+-- DROP TABLE public.mmsrelease;
+
+--Create Table and Comments 
+CREATE TABLE mmsRelease (
+  ID SERIAL NOT NULL PRIMARY KEY,
+  sprintVersion VARCHAR(5),
+  UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+ );
+insert into mmsRelease (SprintVersion)VALUES ('2.00');;
+
+ALTER TABLE public.mmsrelease
+    OWNER to postgres;
+
+GRANT ALL ON TABLE public.mmsrelease TO postgres;
+
+GRANT SELECT ON TABLE public.mmsrelease TO pothole_ro;
+
+insert into mmsRelease (SprintVersion)VALUES ('3.00');
+
+-- Table: public.potholes
+
+-- DROP TABLE public.potholes;
+
+CREATE TABLE PotHoles (
+  WorkID SERIAL NOT NULL PRIMARY KEY,
+  Status pothole_status NOT NULL DEFAULT 'OPEN',
+  Location VARCHAR(60) NOT NULL,
+  Severity INTEGER NOT NULL DEFAULT 1 CHECK (Severity <=5 and Severity >0),
+  ReportingPersonKey VARCHAR(25),
+  CreatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ClosedAt TIMESTAMPTZ,
+  Comments VARCHAR(60)
+);
+
+ALTER TABLE public.potholes
+    OWNER to postgres;
+
+GRANT ALL ON TABLE public.potholes TO postgres;
+
+GRANT SELECT ON TABLE public.potholes TO pothole_ro;
+
+COMMENT ON TABLE public.potholes
+    IS 'Data to identify potholes to be repaired.';
+
+COMMENT ON COLUMN public.potholes.workid
+    IS 'WorkID is potholes, repair, and workorder table primary key.';
+
+COMMENT ON COLUMN public.potholes.status
+    IS 'Pothole report has a status of open or close.';
+
+COMMENT ON COLUMN public.potholes.location
+    IS 'Location of pothole reported.';
+
+COMMENT ON COLUMN public.potholes.severity
+    IS 'The pothole degration severity.';
+
+COMMENT ON COLUMN public.potholes.reportingpersonkey
+    IS 'Optional lowercase foreign key of the person reporting the pothole. It first name initial plus last name.';
+
+COMMENT ON COLUMN public.potholes.createdat
+    IS 'Date pothole report is created.';
+
+COMMENT ON COLUMN public.potholes.updatedat
+    IS 'Date pothole report is last updated.';
+
+COMMENT ON COLUMN public.potholes.closedat
+    IS 'Date pothole report is closed out.';
+
+COMMENT ON COLUMN public.potholes.comments
+    IS 'Free text comments regarding pothole repair.';
+
+
+-- Table: public.person
+
+-- DROP TABLE public.person;
+
+CREATE TABLE public.person
+(
+    personkey character varying(25) COLLATE pg_catalog."default" NOT NULL,
+    firstname character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    lastname character varying(30) COLLATE pg_catalog."default" NOT NULL,
+    address character varying(60) COLLATE pg_catalog."default",
+    phone character varying(20) COLLATE pg_catalog."default",
+    alternatephone character varying(20) COLLATE pg_catalog."default",
+    emailaddress character varying(30) COLLATE pg_catalog."default",
+    createdat timestamp with time zone NOT NULL DEFAULT now(),
+    updatedat timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT person_pkey PRIMARY KEY (personkey)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.person
+    OWNER to postgres;
+
+GRANT ALL ON TABLE public.person TO postgres;
+
+GRANT SELECT ON TABLE public.person TO pothole_ro;
+
+COMMENT ON TABLE public.person
+    IS 'Data to identify Person to be repaired.';
+
+COMMENT ON COLUMN public.person.personkey
+    IS 'lowercase key of the person reporting the pothole or city poc person. It first name initial plus last name.';
+
+COMMENT ON COLUMN public.person.firstname
+    IS 'Persons first name.';
+
+COMMENT ON COLUMN public.person.lastname
+    IS 'Persons last name.';
+
+COMMENT ON COLUMN public.person.address
+    IS 'Persons address.';
+
+COMMENT ON COLUMN public.person.phone
+    IS 'Persons primary phone number.';
+
+COMMENT ON COLUMN public.person.alternatephone
+    IS 'Persons alternate phone number.';
+
+COMMENT ON COLUMN public.person.emailaddress
+    IS 'Persons email is required. ';
+
+COMMENT ON COLUMN public.person.createdat
+    IS 'Date person contact is created.';
+
+COMMENT ON COLUMN public.person.updatedat
+    IS 'Date person contact is last updated.';
+
+	
+CREATE TABLE Repair (
+  WorkID INTEGER REFERENCES Potholes(WorkID) ON DELETE CASCADE NOT NULL PRIMARY KEY,
+  Status repair_status NOT NULL DEFAULT 'LOGGED',
+  Type VARCHAR(15)  NOT NULL DEFAULT 'POTHOLE' CHECK (Type IN ('POTHOLE', 'OTHER', 'MAJORDEGADE')),
+  Poc VARCHAR(50) DEFAULT 'Not Assigned',
+  CreatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ClosedAt TIMESTAMPTZ,
+  Comments VARCHAR(60)
+ );  
+  
+comment on table Repair is 'Repair order data, child table to Pothole table.';
+comment on COLUMN Repair.WorkID is 'Is foreign key referencing Pothole table key.';
+comment on COLUMN Repair.Status is 'Is pothole repair order status of LOGGED, QUEUED, REPAIRED, FAIL, PASS, or WIP.';
+comment on COLUMN Repair.Type is 'Type of repair is pothole.';
+comment on COLUMN Repair.Poc is 'Is the point of contact for pothole repair.';
+comment on COLUMN Repair.CreatedAt is 'Date pothole repair order is created.';
+comment on COLUMN Repair.UpdatedAt is 'Date pothole repair order is last updated.';
+comment on COLUMN Repair.ClosedAt is 'Date pothole repair order closed out.';
+comment on COLUMN Repair.Comments is 'Free text comments regarding pothole repair.';
+
+CREATE TABLE WorkOrder(
+  WorkID INTEGER REFERENCES Potholes(WorkID) ON DELETE CASCADE NOT NULL PRIMARY KEY,
+  Status workorder_status NOT NULL DEFAULT 'OPEN',
+  Type VARCHAR(15)  NOT NULL DEFAULT 'POTHOLE',
+  Poc VARCHAR(50) DEFAULT 'Not Assigned',
+  CreatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ClosedAt TIMESTAMPTZ,
+  Comments VARCHAR(60)
+ );
+
+comment on table WorkOrder is 'WorkOrder order data, child table to Pothole table.';
+comment on COLUMN WorkOrder.WorkID is 'Is foreign key referencing Pothole table key.';
+comment on COLUMN WorkOrder.Status is 'Is WorkOrder repair status of OPEN, DENY, APPROVE, HOLD or CLOSE';
+comment on COLUMN WorkOrder.Type is 'Type of repair is pothole.';
+comment on COLUMN WorkOrder.Poc is 'Is the point of contact for workorder approval.';
+comment on COLUMN WorkOrder.CreatedAt is 'Date pothole work order is created.';
+comment on COLUMN WorkOrder.UpdatedAt is 'Date pothole work order is last updated.';
+comment on COLUMN WorkOrder.ClosedAt is 'Date pothole work order closed out.';
+comment on COLUMN WorkOrder.Comments is 'Free text comments regarding pothole repair work order.';
+
+-- FUNCTION: public.trigger_insert_children_rows()
+
+-- DROP FUNCTION public.trigger_insert_children_rows();
+
+CREATE FUNCTION public.trigger_insert_children_rows()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF 
+AS $BODY$
+BEGIN
+   INSERT INTO Repair (WorkID) VALUES(NEW.WorkID);
+   INSERT INTO WorkOrder (WorkID) VALUES(NEW.WorkID);
+  RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.trigger_insert_children_rows()
+    OWNER TO postgres;
+
+-- FUNCTION: public.trigger_repair_final()
+
+-- DROP FUNCTION public.trigger_repair_final();
+
+CREATE FUNCTION public.trigger_repair_final()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF 
+AS $BODY$     
+BEGIN
+   CASE NEW.Status::TEXT
+		WHEN 'PASS' THEN  --do nothing to work order it requires board to move its status and it will cause a loop
+		---do nothing when REPAIRED because work order initiate close and is taking care of system updates
+		ELSE ---FAIL, SYSREPAIRED (repair init closing out records and not work order)
+			UPDATE WorkOrder SET STATUS = CAST ('CLOSE' as workorder_status), ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+			UPDATE PotHoles SET STATUS = CAST ('CLOSE' as pothole_status), ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+			UPDATE Repair SET STATUS = CAST ('REPAIRED' as repair_status), ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+ END CASE;
+ RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.trigger_repair_final()
+    OWNER TO postgres;
+
+CREATE FUNCTION public.trigger_set_timestamp()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF 
+AS $BODY$
+BEGIN
+  NEW.UpdatedAt = NOW();
+  RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.trigger_set_timestamp()
+    OWNER TO postgres;
+
+	
+-- FUNCTION: public.trigger_work_approve()
+
+-- DROP FUNCTION public.trigger_work_approve();
+
+CREATE FUNCTION public.trigger_work_approve()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF 
+AS $BODY$
+BEGIN
+   UPDATE Repair SET STATUS = 'QUEUED' WHERE WorkID=NEW.WorkID;
+  RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.trigger_work_approve()
+    OWNER TO postgres;
+
+	-- FUNCTION: public.trigger_work_statuscheck()
+
+-- DROP FUNCTION public.trigger_work_statuscheck();
+
+CREATE FUNCTION public.trigger_work_statuscheck()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF 
+AS $BODY$
+BEGIN
+CASE NEW.Status::TEXT
+ WHEN 'DENY' THEN
+            --work final DENY status pothole does not need fixed it is a passable nonsevere issue
+   UPDATE Repair SET STATUS = CAST ('PASS' as repair_status), ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+   UPDATE PotHoles SET STATUS = CAST ('CLOSE' as pothole_status), ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+   UPDATE WorkOrder SET ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+ WHEN 'CLOSE' THEN
+            --work final DO NOT set repair status or you are looping repair final has triggered work close
+   UPDATE PotHoles SET STATUS = CAST ('CLOSE' as pothole_status), ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+   UPDATE WorkOrder SET ClosedAt= NOW() WHERE WorkID=NEW.WorkID;
+ WHEN 'HOLD'THEN
+            --work hold
+ UPDATE Repair SET STATUS = CAST ('HOLD' as repair_status) WHERE WorkID=NEW.WorkID;
+ WHEN 'APPROVE' THEN
+            --work approved
+UPDATE Repair SET STATUS = CAST ('QUEUED' as repair_status) WHERE WorkID=NEW.WorkID;
+ END CASE;
+ RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public.trigger_work_statuscheck()
+    OWNER TO postgres;
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE 
+    ON public.person
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.trigger_set_timestamp();
+
+-- View: public.potholeallreport
+
+-- DROP VIEW public.potholeallreport;
+
+CREATE OR REPLACE VIEW public.potholeallreport AS
+ SELECT p.workid::character varying(20) AS workid,
+    p.location AS potholelocation,
+    p.severity::character varying(5) AS severity,
+    to_char(p.createdat, 'MM/DD/YYYY HH12:MI:SS'::text) AS createddate,
+    p.status AS potholestatus,
+    r.status AS repairstatus,
+    w.status AS workorderstatus,
+    r.type AS repairordertype,
+    w.type AS workordertype,
+    p.reportingpersonkey,
+    r.poc AS repairpoc,
+    w.poc AS workorderpoc,
+    to_char(p.updatedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS potholeupdateddate,
+    to_char(r.updatedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS repairupdateddate,
+    to_char(w.updatedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS workorderupdateddae,
+    to_char(p.closedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS potholeclosedtime,
+    to_char(r.closedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS repairclosedtime,
+    to_char(w.closedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS workorderclosedtime,
+    p.comments AS potholecomments,
+    r.comments AS repaircomments,
+    w.comments AS workordercomments
+   FROM potholes p
+     JOIN repair r ON p.workid = r.workid
+     JOIN workorder w ON r.workid = w.workid;
+
+ALTER TABLE public.potholeallreport
+    OWNER TO postgres;
+
+GRANT SELECT ON TABLE public.potholeallreport TO pothole_ro;
+GRANT ALL ON TABLE public.potholeallreport TO postgres;
+
+-- View: public.personreport
+
+-- DROP VIEW public.personreport;
+
+CREATE OR REPLACE VIEW public.personreport AS
+ SELECT person.personkey,
+    person.firstname,
+    person.lastname,
+    person.address,
+    person.phone,
+    person.alternatephone,
+    person.emailaddress,
+    to_char(person.createdat, 'MM/DD/YYYY HH12:MI:SS'::text) AS createddate,
+    to_char(person.updatedat, 'MM/DD/YYYY HH12:MI:SS'::text) AS updateddate
+   FROM person;
+
+ALTER TABLE public.personreport
+    OWNER TO postgres;
+
+GRANT SELECT ON TABLE public.personreport TO pothole_ro;
+GRANT ALL ON TABLE public.personreport TO postgres;
+
+-- Trigger: insert_children_rows
+
+-- DROP TRIGGER insert_children_rows ON public.potholes;
+
+CREATE TRIGGER insert_children_rows
+    AFTER INSERT
+    ON public.potholes
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.trigger_insert_children_rows();
+
+-- Trigger: set_timestamp
+
+-- DROP TRIGGER set_timestamp ON public.potholes;
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE 
+    ON public.potholes
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.trigger_set_timestamp();
+	
+	CREATE TRIGGER set_timestamp
+    BEFORE UPDATE 
+    ON public.person
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.trigger_set_timestamp();
+	
+CREATE TRIGGER set_timestamp
+BEFORE UPDATE ON Repair
+FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
+
+CREATE TRIGGER set_timestamp
+BEFORE UPDATE ON WorkOrder
+FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
+
+--Trigger after Updates
+CREATE TRIGGER repair_final_status
+AFTER UPDATE OF Status ON  Repair
+FOR EACH ROW  WHEN (NEW.Status::TEXT IN ('SYSREPAIRED', 'PASS', 'FAIL'))
+EXECUTE PROCEDURE trigger_repair_final();
+
+CREATE TRIGGER work_status_check
+AFTER UPDATE OF Status ON  WorkOrder
+FOR EACH ROW  WHEN (NEW.Status::TEXT IN ('DENY','CLOSE','HOLD','APPROVE'))
+EXECUTE PROCEDURE trigger_work_statuscheck();
+	

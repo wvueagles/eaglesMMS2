@@ -1,0 +1,11 @@
+
+DROP VIEW IF EXISTS PotholeAllReport, personreport;
+DROP TABLE IF EXISTS  Person, WorkOrder, Repair; 
+DROP TABLE IF EXISTS mmsRelease, Potholes;
+DROP TRIGGER IF EXISTS  trigger_insert_children_rows ON Potholes; 
+DROP TRIGGER IF EXISTS  trigger_set_timestamp ON Potholes;  
+DROP TRIGGER IF EXISTS  trigger_set_timestamp ON Repair; 
+DROP TRIGGER IF EXISTS  trigger_set_timestamp ON Workorder; 
+DROP FUNCTION IF EXISTS trigger_insert_children_rows, trigger_set_timestamp, trigger_work_approve, trigger_work_statuscheck, trigger_repair_final();
+DROP type if exists pothole_status,repair_status, workorder_status;
+ 

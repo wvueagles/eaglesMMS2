@@ -1,0 +1,20 @@
+insert into Person VALUES ('egee','Elwood','Gee','1 President Way ,WVU Morgantown WV 26505','304-293-5531','','presidentsoffice@mail.wvu.edu');
+insert into Person VALUES ('mgregory','Gregory','Mundy','Mundys Place 669 Madigan Ave, Morgantown, WV 26501','3042934821',' ','gregory.mundy@mail.wvu.edu');
+insert into Person VALUES ('mkrueger','Marc','Krueger','123 Main Street, Morgantown WV 26501','3043669118',' ','mkrueger@mix.wvu.edu');
+insert into Person VALUES ('palonge','Pam','Alonge','123 Pine Street, Fairmont WV 26554','3043634874',' ','paalonge@mix.wvu.edu');
+insert into Person VALUES ('jdecarlo','John','DeCarlo','123 Elm Street, Boston MA 02134','2025149875',' ','jnd0013@mix.wvu.edu');
+insert into Person VALUES ('jcogar','Jeffrey','Cogar','123 Poplar Street, Clarksburg WV 26301','3043632583','3045552222','jdc0051@mix.wvu.edu');
+insert into Person VALUES ('jroberts','Jenifer','Roberts','123 Spruce Street, Austin TX 26842','4145823321',' ','jenjenroberts@aol.com');
+
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('123 Main Street', 2, 'egee','Minor inconvenience to my trip to the Presidents office.');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS)  VALUES ('447 Spruce Street','2','mgregory','Potholes distract me from Agile.');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('1299 Van Vorhis Road','4','mkrueger','Did we have an earthquake recently');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('694 Patteson Avenue','5','palonge','I lost my car in this pothole!  Fix it now!');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('123 Pleasant Street','2','jdecarlo','');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('899 High Street','1','jcogar','I tripped leaving Gibbies!');
+insert into PotHoles(LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS)  VALUES ('1829 Beechurst Avenue','3','jroberts','It is absurd that this pothole is not FIXED!');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS)  VALUES ('398 Maple Avenue','3','jdecarlo','This pothole came out of nowhere!');
+insert into PotHoles (LOCATION, SEVERITY, REPORTINGPERSONKEY, COMMENTS) VALUES ('4747 Grand Avenue','5','jroberts','');
+
+update workorder set status = CAST ('APPROVE' as workorder_status)  where workid=2;   --this was annoying to be forced to cast the type
+

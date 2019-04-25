@@ -1,0 +1,28 @@
+CREATE DATABASE eagles_mms
+    WITH 
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'English_United States.1252'
+    LC_CTYPE = 'English_United States.1252'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1;
+	
+create user pothole with password 'pothole' CREATEDB;
+grant all privileges on database eagles_mms to pothole;
+ 
+create user pothole_ro with encrypted password 'pothole'; 
+grant connect on database eagles_mms to pothole_ro;
+grant usage on schema public to pothole_ro;
+grant select on all sequences in schema public to pothole_ro; 
+grant select on all tables in schema public to pothole_ro;
+alter default privileges in schema public grant select on tables to pothole_ro;
+
+
+  CREATE DATABASE "database";
+  CREATE USER someuser WITH PASSWORD 'securepassword';
+  GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO someuser;
+  CREATE TABLE "some_table_name"(
+    "id" int NOT NULL,
+    "data" text NOT NULL
+  );
+  INSERT INTO "some_table_name" values(0, "some text");
